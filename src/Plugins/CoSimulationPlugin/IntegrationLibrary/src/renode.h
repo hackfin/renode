@@ -33,6 +33,16 @@ struct Protocol
 enum Action
 {
 #include "../hdl/includes/renode_action_enumerators.svh"
+	,
+	Property_Query = 128,
+	Property_Answer,
+	Property_Select,
+	Property_Set,
+	Property_SetString,
+	Property_SetCmd,
+	Property_Get,
+	Property_GetId,
+
 };
 
 enum LogLevel

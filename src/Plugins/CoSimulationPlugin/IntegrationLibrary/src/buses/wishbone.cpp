@@ -60,9 +60,10 @@ void Wishbone::timeoutTick(uint8_t *signal, uint8_t value, int timeout = DEFAULT
 void Wishbone::write(int width, uint64_t addr, uint64_t value)
 {
     if(width < granularity ) {
+        char out[80];
         char msg[] = "Unexpected write width %d"; // we sprintf to self, because width is never longer than 2 digits
-        sprintf(msg, msg, width);
-        throw msg;
+        sprintf(out, msg, width);
+        throw out;
     }
     *wb_we = 1;
     *wb_sel = (uint8_t)((1 << width) - 1);
@@ -84,9 +85,11 @@ void Wishbone::write(int width, uint64_t addr, uint64_t value)
 
 uint64_t Wishbone::read(int width, uint64_t addr)
 {
+	static char msg[] = "Unexpected read width %d\0"; // we sprintf to self, because width is never longer than 2 digits
+	char out[80];
+
     if(width < granularity) {
-        char msg[] = "Unexpected read width %d"; // we sprintf to self, because width is never longer than 2 digits
-        sprintf(msg, msg, width);
+        sprintf(out, msg, width);
         throw msg;
     }
     *wb_we = 0;

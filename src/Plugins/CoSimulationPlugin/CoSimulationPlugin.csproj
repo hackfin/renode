@@ -51,6 +51,7 @@
     <Compile Include="Connection\SocketConnection.cs" />
     <Compile Include="Connection\LibraryConnection.cs" />
     <Compile Include="Connection\CoSimulationConnection.cs" />
+    <Compile Include="Connection\CoSimulationNetppConnection.cs" />
     <Compile Include="Connection\Protocols\ProtocolMessage.cs" />
     <Compile Include="Connection\Protocols\ActionType.cs" />
   </ItemGroup>

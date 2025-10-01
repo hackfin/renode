@@ -43,5 +43,15 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection.Protocols
         GetQuadWord,
         PushConfirmation,
         Step = 100, //all custom action type numbers must not fall in this range
+
+		Property_Query = 128,
+		Property_Answer,
+		Property_Select,
+		Property_Set,
+		Property_SetString,
+		Property_SetCmd,
+		Property_Get,
+		Property_GetId,
+
     }
 }

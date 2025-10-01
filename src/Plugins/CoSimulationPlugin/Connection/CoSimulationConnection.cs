@@ -18,6 +18,7 @@ using Antmicro.Renode.Peripherals.CoSimulated;
 using Antmicro.Renode.Peripherals.Timers;
 using Antmicro.Renode.Plugins.CoSimulationPlugin.Connection.Protocols;
 using Range = Antmicro.Renode.Core.Range;
+using System.Runtime.InteropServices; // Marshal
 
 namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection
 {
@@ -217,6 +218,8 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection
 
         public void Send(ICoSimulationConnectible connectible, ActionType actionId, ulong offset, ulong value)
         {
+			this.Log(LogLevel.Noisy, "Send message {0} {1}", offset, value);
+
             int renodeToCosimIndex = connectible != null ? connectible.RenodeToCosimIndex : ProtocolMessage.NoPeripheralIndex;
             var message = new ProtocolMessage(actionId, offset, value, renodeToCosimIndex);
             if(!cosimConnection.TrySendMessage(message))
@@ -298,6 +301,43 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection
             return result.Data;
         }
 
+        public ulong Query(ICoSimulationConnectible connectible, ActionType actionId, ulong offset, ulong value, out uint token)
+		{
+            if(!IsConnected)
+            {
+                this.Log(LogLevel.Warning, "Cannot read from peripheral. Set SimulationFilePath or connect to a simulator first!");
+				token = 0;
+                return 0;
+            }
+            Send(connectible, actionId, offset, value);
+            var result = Receive();
+            ValidateResponse(result);
+			token = (uint) result.Address;
+            return result.Data;
+		}
+
+        public int QueryString(ICoSimulationConnectible connectible, ActionType actionId, uint token, out string str)
+		{
+			str = "";
+            if(!IsConnected)
+            {
+                this.Log(LogLevel.Warning, "Cannot read from peripheral. Set SimulationFilePath or connect to a simulator first!");
+				token = 0;
+                return 0;
+            }
+            Send(connectible, actionId, token, 0);
+            var result = Receive();
+            ValidateResponse(result);
+			if (result.Data > 0) {
+				IntPtr p = (IntPtr) result.Address;
+				this.Log(LogLevel.Noisy, "Got Addr {0:X}", result.Address);
+				str = Marshal.PtrToStringAnsi(p);
+				return (int) result.Data;
+			} else {
+				return -1;
+			}
+		}
+
         private void AbortAndLogError(string message)
         {
             // It's safe to call AbortAndLogError from any thread.
@@ -327,7 +367,7 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection
                     this.Log(LogLevel.Warning, "Ignoring parameters {0} and {1}, they only affect socket-based co-simulation connections",
                         nameof(stdoutFile), nameof(stderrFile));
                 }
-                cosimConnection = new LibraryConnection(this, timeout, HandleReceivedMessage);
+                cosimConnection = new NetppLocalConnection(this, timeout, HandleReceivedMessage);
             }
 
             // Setup time synchronization
@@ -362,7 +402,7 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection
             }
         }
 
-        private ProtocolMessage Receive()
+        protected ProtocolMessage Receive()
         {
             if(!cosimConnection.TryReceiveMessage(out var message))
             {

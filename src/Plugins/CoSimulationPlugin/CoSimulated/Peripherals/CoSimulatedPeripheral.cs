@@ -6,6 +6,7 @@
 //
 using System;
 using System.Threading;
+using System.Runtime.InteropServices; // Marshal
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Antmicro.Renode.Core;
@@ -71,6 +72,98 @@ namespace Antmicro.Renode.Peripherals.CoSimulated
             // for each input connection
             connection?.SendGPIO((int)renodeToCosimSignalsOffset + number, value);
         }
+
+		protected int GetToken(string property, out uint token)
+		{
+			IntPtr ptr = Marshal.StringToHGlobalAnsi(property);
+			ProtocolMessage msg;
+
+			int ret;
+
+            ret = (int) connection.Query(null, ActionType.Property_Query, (ulong) property.Length, (ulong) ptr, out token);
+			Marshal.FreeHGlobal(ptr);
+			return ret;
+		}
+
+		protected int SelectToken(uint parent, uint prev, out uint next)
+		{
+            return (int) connection.Query(null, ActionType.Property_Select, (ulong) parent, (ulong) prev, out next);
+		}
+
+		protected int TokenGetId(uint token, out string name)
+		{
+            return (int) connection.QueryString(null, ActionType.Property_GetId, token, out name);
+		}
+
+        public void SetProperty(string property, int value)
+        {
+			uint token;
+			int ret = GetToken(property, out token);
+
+			if (ret == 0) {
+				connection.Send(null, ActionType.Property_Set, (ulong) token, (ulong) value);
+				this.Log(LogLevel.Noisy, "Set Property {0:X} -> (int) {1}", token, value);
+			}
+
+        }
+
+        public void SetProperty(string property, string value)
+        {
+			uint token;
+			int ret = GetToken(property, out token);
+
+			if (ret == 0) {
+				IntPtr ptr = Marshal.StringToHGlobalAnsi(value);
+				// Fixme: Maybe some day we want to encode the size
+				connection.Send(null, ActionType.Property_SetString, (ulong) token, (ulong) ptr);
+				this.Log(LogLevel.Noisy, "Set Property {0:X} -> (string) {1}", token, value);
+			}
+        }
+
+        public void SetCmd(string property, int cmd)
+        {
+			uint token;
+			int ret = GetToken(property, out token);
+
+			if (ret == 0) {
+				connection.Send(null, ActionType.Property_SetCmd, (ulong) token, (ulong) cmd);
+				this.Log(LogLevel.Noisy, "Set command {0:X} -> (string) {1}", token, cmd);
+			}
+        }
+
+
+        public uint GetProperty(string property = "")
+        {
+			uint token;
+			uint prev, walk;
+			uint value = 0;
+			int ret = 0;
+
+			if (property != "") {
+				ret = GetToken(property, out token);
+
+
+				if (ret == 0) {
+					ret = (int) connection.Query(null, ActionType.Property_Get,
+						(ulong) token, (ulong) 0, out value);
+
+					this.Log(LogLevel.Noisy, "Get Property {0} -> (int) {1}", token, value);
+				}
+			} else {
+				token = 0xffffffff;
+			}
+
+			walk = token;
+			string name = "empty";
+
+			while (ret == 0) {
+				ret = SelectToken(token, walk, out walk);
+				if (ret == 0) TokenGetId(walk, out name);
+				this.Log(LogLevel.Noisy, "Walk {0:X}:{1} ", walk, name);
+			}
+
+			return value;
+		}
 
         public virtual void OnConnectionAttached(CoSimulationConnection connection)
         {
