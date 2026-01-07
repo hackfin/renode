@@ -48,6 +48,7 @@ namespace Antmicro.Renode.Plugins.CoSimulationPlugin.Connection.Protocols
 		Property_Answer,
 		Property_Select,
 		Property_Set,
+		Property_SetBool,
 		Property_SetString,
 		Property_SetCmd,
 		Property_Get,

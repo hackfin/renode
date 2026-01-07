@@ -28,12 +28,15 @@ public:
     // value<1>   wb_stall = nullptr;
     uint8_t   granularity;
     uint8_t   addr_lines;
+	value<16>  *irq; // IRQ lines that correspond to a message
+	value<16>  *irqack; // Optional IRQ feedback acknowledge
 };
 
 
 class WishboneCXXRTL : public WishboneCXXRTLBase, public BaseTargetBus
 {
 	public:
+	uint8_t irq_access[16];
     WishboneCXXRTL() { }
     virtual void tick(bool countEnable, uint64_t steps);
     virtual void write(int width, uint64_t addr, uint64_t value);

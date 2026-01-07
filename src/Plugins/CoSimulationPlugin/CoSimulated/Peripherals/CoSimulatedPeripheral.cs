@@ -76,7 +76,7 @@ namespace Antmicro.Renode.Peripherals.CoSimulated
 		protected int GetToken(string property, out uint token)
 		{
 			IntPtr ptr = Marshal.StringToHGlobalAnsi(property);
-			ProtocolMessage msg;
+			// ProtocolMessage msg;
 
 			int ret;
 
@@ -107,6 +107,19 @@ namespace Antmicro.Renode.Peripherals.CoSimulated
 
         }
 
+        public void SetProperty(string property, bool value)
+        {
+			uint token;
+			int ret = GetToken(property, out token);
+
+			if (ret == 0) {
+				connection.Send(null, ActionType.Property_SetBool, (ulong) token, value ? (ulong) 1: (ulong) 0 );
+				this.Log(LogLevel.Noisy, "Set Property {0:X} -> (bool) {1}", token, value);
+			}
+
+        }
+
+
         public void SetProperty(string property, string value)
         {
 			uint token;
@@ -135,7 +148,7 @@ namespace Antmicro.Renode.Peripherals.CoSimulated
         public uint GetProperty(string property = "")
         {
 			uint token;
-			uint prev, walk;
+			uint walk;
 			uint value = 0;
 			int ret = 0;
 

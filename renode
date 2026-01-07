@@ -108,6 +108,7 @@ else
     then
         "${OUTPUT_PATH}/${TARGET}/Renode.exe" "${PARAMS[@]:-}"
     else
+        echo $LAUNCHER "${OUTPUT_PATH}/${TARGET}/Renode.exe" "${PARAMS[@]:-}"
         $LAUNCHER "${OUTPUT_PATH}/${TARGET}/Renode.exe" "${PARAMS[@]:-}"
     fi
 fi

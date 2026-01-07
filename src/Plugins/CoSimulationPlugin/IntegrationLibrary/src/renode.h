@@ -38,6 +38,7 @@ enum Action
 	Property_Answer,
 	Property_Select,
 	Property_Set,
+	Property_SetBool,
 	Property_SetString,
 	Property_SetCmd,
 	Property_Get,
